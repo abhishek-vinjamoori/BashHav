@@ -44,10 +44,18 @@ void subproc (int, int,int, char** ,int);
 int redirection(int, int*,char*,char*,char**,int,int);
 //Giving a maximum size
 int buffer_space=1024;
-
+int minimum(int a,int b);
+int maximum(int a,int b);
 int main()
 {
 	char home_directory[buffer_space],current_directory[buffer_space],command[buffer_space],commandfull[buffer_space],myname[100];
+	char* history[buffer_space];
+	int commandCount = 0;
+	int histj;
+	for(histj=0;histj<buffer_space;histj++)
+	{
+		history[histj]=(char*)malloc(sizeof(char)*100);
+	}
 	getcwd(home_directory,sizeof(home_directory));
 	int flag=1;
 	int rr;
@@ -111,6 +119,7 @@ int main()
 
 			//Commandfull variable contains only the command.
 			strcpy(commandfull,token);
+			strcpy(history[commandCount++],commandfull);
 			while(token!=NULL)
 			{
 				argument[itr]=(char*)malloc(sizeof(char)*strlen(token));
@@ -261,38 +270,6 @@ int main()
 				//printf("%s %s\n",inputfile,outputfile);
 				pid_t proc;
 
-				if(pipecount>=1)
-				{
-					if(!strcmp(commandfull,"cd"))
-					{
-						changedirectory(home_directory,temporarycommand);
-						//printf(KMAG"%s\n" RESET ,current_directory);
-					}
-					else if(!strcmp(commandfull,"exit")||!strcmp(commandfull,"quit"))
-					{
-						//Closing our shell
-						exit(0);
-					}
-
-					else{
-						pipe (fd);
-
-						pid_t processes;
-						processes = fork ();
-
-						if(red_1==1||red_2)
-						{
-							redirection(processes,fd,inputfile,outputfile,temporarycommand,red_1,red_2);
-						}
-						subproc (processes,in, fd [1], temporarycommand,x);
-
-						close (fd [1]);
-
-						in = fd [0];
-
-						pipecount--;
-					}
-				}
 
 				start=i+1;
 				piped=strtok_r(NULL,"|",&nxt);
@@ -326,28 +303,33 @@ int main()
 						}
 					}
 				}
-				else if(!strcmp(temporarycommand[0],"kjob"))
+				else if(!strcmp(temporarycommand[0],"hist") && temporarycommand[x]==NULL) 
 				{
-					int tempc=atoi(temporarycommand[1]);
-					if(bgstack.process[tempc]!=0)
+					int toPrint = commandCount;
+					int dontCont = 0;					
+					if(temporarycommand[1]!=NULL && temporarycommand[2]==NULL)
 					{
-						printf("Killing process %d\t%d\n",tempc,atoi(temporarycommand[2]));
-						int ret=kill(bgstack.process[tempc],atoi(temporarycommand[2]));
-						for(i=tempc;i<bgstack.current-1;i++)
-						{
-							bgstack.process[i]=bgstack.process[i+1];
-							strcpy(bgstack.processname[i],bgstack.processname[i+1]);	
-						}
-						bgstack.process[i]=0;
-						bgstack.processname[i]='\0';
-						bgstack.current--;
+						toPrint = atoi(temporarycommand[1]);
+						toPrint++;		
+					}
+					else if(temporarycommand[1]==NULL)
+					{
+						toPrint = commandCount;	
 					}
 					else
 					{
-						printf("Process does not exist\n");
+						printf("Invalid command\n");
+						dontCont = 1;
 					}
-
-				}
+					if(!dontCont)
+					{	
+						int ghj;
+						for(ghj=maximum(0,commandCount-toPrint);ghj<commandCount-1;ghj++)
+						{
+							printf("[%d] %s\n",ghj+1,history[ghj]);
+						}
+					}
+				}				
 				else if(!strcmp(temporarycommand[0],"overkill"))
 				{
 					for(i=1;i<bgstack.current;i++)
@@ -405,23 +387,6 @@ int main()
 
 				}
 				else{
-
-/*					process_id=fork();
-
-					if(process_id==0)
-					{
-						if(red_1||red_2)
-						{
-													printf("%s\n",outputfile);
-													printf("%d%d%d\n",red_1,red_2,x); 
-							printf("%d\n",in);
-							redirection(process_id,fd,inputfile,outputfile,temporarycommand,red_1,red_2);
-						}
-						if (in != 0&&red_1==0)
-						{
-							dup2(in, 0);
-						}
-					}*/
 					//Background process	
 					if(temporarycommand[x-1]!=NULL&&temporarycommand[x-1][0]=='&') 
 					{
@@ -746,4 +711,21 @@ void systemcalls(int process_id,char* commandfull,char* argument[],int itr)
 	}
 	waitpid(process_id,&status,WUNTRACED);
 	
+}
+
+int minimum(int a,int b)
+{
+	if(a<b)
+	{
+		return a;
+	}
+	return b;
+}
+int maximum(int a,int b)
+{
+	if(a>b)
+	{
+		return a;
+	}
+	return b;
 }
