@@ -218,11 +218,11 @@ int main()
 				}
 				temporarycommand[x]='\0';
 
-				for(j=0;j<x;j++)
+				/*for(j=0;j<x;j++)
 				{
-					//printf("%s\n",temporarycommand[j]);
+					printf("%s\n",temporarycommand[j]);
 				}
-				//printf("\n");
+				printf("\n");*/
 				red_1=0;
 				red_2=0;
 				int iterator=0;
@@ -310,15 +310,19 @@ int main()
 					//Closing our shell
 					exit(0);
 				}	
-				else if(!strcmp(temporarycommand[0],"jobs"))
+				else if(!strcmp(commandfull,"pid") && temporarycommand[1]=='\0')
+				{
+					printf("command name: ./a.out  process id: %d\n",getpid());
+				}
+				else if(!strcmp(temporarycommand[0],"pid") && temporarycommand[1]!='\0' && !strcmp(temporarycommand[1],"current"))
 				{
 					int cntr=1;
 					for(i=1;i<bgstack.current;i++)
 					{
 						if(bgstack.process[i]!=0)
 						{	
-
-							printf("[%d]" KRED " %s" RESET " [%d]\n",i,bgstack.processname[i],bgstack.process[i]);
+							printf("[%d] " KRED "command name:"  " %s " RESET   KCYN "process id:"  " [%d]\n" RESET,i,bgstack.processname[i],bgstack.process[i]);
+				//			printf("[%d]" KRED " %s" RESET " [%d]\n",i,bgstack.processname[i],bgstack.process[i]);
 						}
 					}
 				}
@@ -351,11 +355,6 @@ int main()
 						int ret=kill(bgstack.process[i],9);
 					}
 					bgstack.current=1;
-				}
-				else if(!strcmp(temporarycommand[0],"fg"))
-				{
-					int ff;
-					tcsetpgrp(ff,getpgid(bgstack.process[atoi(temporarycommand[1])]));
 				}
 				else if(!strcmp(temporarycommand[0],"echo"))
 				{
@@ -407,26 +406,33 @@ int main()
 				}
 				else{
 
-					process_id=fork();
+/*					process_id=fork();
 
 					if(process_id==0)
 					{
 						if(red_1||red_2)
 						{
-							/*						printf("%s\n",outputfile);
-													printf("%d%d%d\n",red_1,red_2,x); */
-							//printf("%d\n",in);
+													printf("%s\n",outputfile);
+													printf("%d%d%d\n",red_1,red_2,x); 
+							printf("%d\n",in);
 							redirection(process_id,fd,inputfile,outputfile,temporarycommand,red_1,red_2);
 						}
 						if (in != 0&&red_1==0)
 						{
 							dup2(in, 0);
 						}
-					}
+					}*/
 					//Background process	
 					if(temporarycommand[x-1]!=NULL&&temporarycommand[x-1][0]=='&') 
 					{
-						//printf("Sending to background\n");
+						printf("Sending to background\n");
+						/*int ghj;
+						for(ghj=0;ghj<x;ghj++)
+						{
+							printf("%s\n",temporarycommand[ghj]);
+						}
+						printf("XVal: %d\n",x);*/
+						process_id = fork();
 						if(process_id!=0)
 						{
 
@@ -434,10 +440,11 @@ int main()
 							bgstack.processname[bgstack.current]=(char*)malloc(sizeof(char)*strlen(temporarycommand[0]));
 							strcpy(bgstack.processname[bgstack.current++],temporarycommand[0]);
 						}
-						sendtobackground(process_id,temporarycommand,x);
+						sendtobackground(process_id,temporarycommand,x-1);
 					}
 					else{ //Foreground process
 						//fgsignalhandler();
+						process_id = fork();
 						systemcalls(process_id,temporarycommand[0],temporarycommand,x);
 					}
 
@@ -580,7 +587,8 @@ void sendtobackground(int process_id,char** command,int itr)
 	}
 	else if(process_id>0)
 	{
-		printf("[%d]" KRED " %s" RESET " [%d]\n",bgstack.current-1,command[0],bgstack.process[bgstack.current-1]);
+		printf("[%d] " KRED "command name:"  " %s " RESET   KCYN "process id:"  " [%d]\n" RESET,bgstack.current-1,command[0],bgstack.process[bgstack.current-1]);
+		//printf("[%d]" KRED " %s" RESET " [%d]\n",bgstack.current-1,command[0],bgstack.process[bgstack.current-1]);
 	}
 	else
 	{
@@ -591,6 +599,7 @@ void sendtobackground(int process_id,char** command,int itr)
 		//commandfull is the command and argument is the command including all arguments"
 		if(!strcmp(command[0],"ls") || !strcmp(command[0],"grep"))
 		{
+			itr++;
 			command[itr-1]=(char*)malloc(sizeof(char)*7);
 			strcpy(command[itr-1],"--color");
 		}
@@ -599,7 +608,7 @@ void sendtobackground(int process_id,char** command,int itr)
 		
 		if(ret<0)
 		{
-			perror("Incorrent command.Syntax error.Try again\n");
+			perror("Incorrect command.Syntax error.Try again\n");
 			_exit(-1);
 		}
 
